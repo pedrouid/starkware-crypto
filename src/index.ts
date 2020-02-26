@@ -24,6 +24,16 @@ const { curves: eCurves, ec: EllipticCurve } = elliptic;
 
 export type KeyPair = elliptic.ec.KeyPair;
 
+export type MessageParams = {
+  instructionTypeBn: BN;
+  vault0Bn: BN;
+  vault1Bn: BN;
+  amount0Bn: BN;
+  amount1Bn: BN;
+  nonceBn: BN;
+  expirationTimestampBn: BN;
+};
+
 export const prime = new BN(
   '800000000000011000000000000000000000000000000000000000000000001',
   16
@@ -60,15 +70,46 @@ const TWO_POW_63_BN = new BN('8000000000000000', 16);
 
 const MISSING_HEX_PREFIX = 'Hex strings expected to be prefixed with 0x.';
 
-function removeHexPrefix(hex: string): string {
-  return hex.replace('0x', '');
-}
-
 function isHexPrefixed(str: string) {
   return str.substring(0, 2) === '0x';
 }
 
-export function pedersen(input: string[]): string {
+function removeHexPrefix(hex: string): string {
+  return hex.replace(/^0x/, '');
+}
+
+function addHexPrefix(hex: string): string {
+  return isHexPrefixed(hex) ? hex : `0x${hex}`;
+}
+
+function sanitizeHex(hex: string): string {
+  hex = removeHexPrefix(hex);
+  if (hex === '') {
+    return '';
+  }
+  hex = hex.length % 2 !== 0 ? '0' + hex : hex;
+  return addHexPrefix(hex);
+}
+
+export function getKeyPair(privateKey: string): KeyPair {
+  return starkEc.keyFromPrivate(privateKey, 'hex');
+}
+
+export function getStarkKey(publicKey: string): string {
+  const keyPair = starkEc.keyFromPublic(publicKey, 'hex');
+  const starkKeyBn = (keyPair as any).pub.getX();
+  return sanitizeHex(starkKeyBn.toString(16));
+}
+
+export function getPrivate(keyPair: KeyPair): string {
+  return keyPair.getPrivate('hex');
+}
+
+export function getPublic(keyPair: KeyPair): string {
+  return keyPair.getPublic(true, 'hex');
+}
+
+function pedersen(input: string[]): string {
   const ZERO_BN = new BN('0');
   const one = new BN('1');
   let point = shiftPoint;
@@ -87,6 +128,28 @@ export function pedersen(input: string[]): string {
   return point.getX().toString(16);
 }
 
+export function deserializeMessage(serialized: string): MessageParams {
+  serialized = removeHexPrefix(serialized);
+  const slice0 = 0;
+  const slice1 = slice0 + 1;
+  const slice2 = slice1 + 31;
+  const slice3 = slice2 + 31;
+  const slice4 = slice3 + 63;
+  const slice5 = slice4 + 63;
+  const slice6 = slice5 + 31;
+  const slice7 = slice6 + 22;
+
+  return {
+    instructionTypeBn: new BN(serialized.substring(slice0, slice1), 16),
+    vault0Bn: new BN(serialized.substring(slice1, slice2), 16),
+    vault1Bn: new BN(serialized.substring(slice2, slice3), 16),
+    amount0Bn: new BN(serialized.substring(slice3, slice4), 16),
+    amount1Bn: new BN(serialized.substring(slice4, slice5), 16),
+    nonceBn: new BN(serialized.substring(slice5, slice6), 16),
+    expirationTimestampBn: new BN(serialized.substring(slice6, slice7), 16),
+  };
+}
+
 export function serializeMessage(
   instructionTypeBn: BN,
   vault0Bn: BN,
@@ -95,7 +158,7 @@ export function serializeMessage(
   amount1Bn: BN,
   nonceBn: BN,
   expirationTimestampBn: BN
-) {
+): string {
   let serialized = instructionTypeBn;
   serialized = serialized.ushln(31).add(vault0Bn);
   serialized = serialized.ushln(31).add(vault1Bn);
@@ -103,10 +166,14 @@ export function serializeMessage(
   serialized = serialized.ushln(63).add(amount1Bn);
   serialized = serialized.ushln(31).add(nonceBn);
   serialized = serialized.ushln(22).add(expirationTimestampBn);
-  return serialized.toString(16);
+  return sanitizeHex(serialized.toString(16));
 }
 
-function signMsg(serialized: string, token0: string, token1OrPubKey: string) {
+function hashMessage(
+  serialized: string,
+  token0: string,
+  token1OrPubKey: string
+) {
   return pedersen([pedersen([token0, token1OrPubKey]), serialized]);
 }
 
@@ -201,8 +268,8 @@ export function getLimitOrderMsg(
     nonce,
     expirationTimestamp
   );
-  return signMsg(
-    serialized,
+  return hashMessage(
+    removeHexPrefix(serialized),
     removeHexPrefix(tokenSell),
     removeHexPrefix(tokenBuy)
   );
@@ -242,8 +309,8 @@ export function getTransferMsg(
     nonce,
     expirationTimestamp
   );
-  return signMsg(
-    serialized,
+  return hashMessage(
+    removeHexPrefix(serialized),
     removeHexPrefix(token),
     removeHexPrefix(receiverPublicKey)
   );
@@ -255,6 +322,9 @@ export function getTransferMsg(
    _truncateToN(fixMessage(msg)) == msg.
 */
 function fixMessage(msg: string) {
+  // remove hex prefix
+  msg = removeHexPrefix(msg);
+
   // Convert to BN to remove leading zeros.
   msg = new BN(msg, 16).toString(16);
 
@@ -273,8 +343,9 @@ function fixMessage(msg: string) {
  key should be an elliptic.keyPair with a valid private key.
  Returns an elliptic.Signature.
 */
-export const sign = (keyPair: KeyPair, msg: string) =>
-  keyPair.sign(fixMessage(msg));
+export function sign(keyPair: KeyPair, msg: string): elliptic.ec.Signature {
+  return keyPair.sign(fixMessage(msg));
+}
 
 /*
  Verifies a message using the provided key.
@@ -282,8 +353,10 @@ export const sign = (keyPair: KeyPair, msg: string) =>
  msgSignature should be an elliptic.Signature.
  Returns a boolean true if the verification succeeds.
 */
-export const verify = (
+export function verify(
   keyPair: KeyPair,
   msg: string,
-  msgSignature: elliptic.SignatureInput
-) => keyPair.verify(fixMessage(msg), msgSignature);
+  sig: elliptic.SignatureInput
+): boolean {
+  return keyPair.verify(fixMessage(msg), sig);
+}
