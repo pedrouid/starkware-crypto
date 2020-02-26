@@ -20,7 +20,7 @@ import * as elliptic from 'elliptic';
 import assert from 'assert';
 import constantPointsHex from './constantPoints';
 
-const { curves: eCurves, ec: EllipticCurve } = elliptic;
+/* --------------------------- TYPINGS ---------------------------------- */
 
 export type KeyPair = elliptic.ec.KeyPair;
 
@@ -34,13 +34,15 @@ export type MessageParams = {
   expirationTimestampBn: BN;
 };
 
+/* --------------------------- ELLIPTIC ---------------------------------- */
+
 export const prime = new BN(
   '800000000000011000000000000000000000000000000000000000000000001',
   16
 );
 
-const starkEc = new EllipticCurve(
-  new eCurves.PresetCurve({
+const starkEc = new elliptic.ec(
+  new elliptic.curves.PresetCurve({
     type: 'short',
     prime: null,
     p: prime as any,
@@ -57,6 +59,8 @@ const starkEc = new EllipticCurve(
 );
 export const ec = starkEc;
 
+/* --------------------------- CONSTANTS ---------------------------------- */
+
 export const constantPoints = constantPointsHex.map(coords =>
   starkEc.curve.point(new BN(coords[0], 16), new BN(coords[1], 16))
 );
@@ -69,6 +73,8 @@ const TWO_POW_31_BN = new BN('80000000', 16);
 const TWO_POW_63_BN = new BN('8000000000000000', 16);
 
 const MISSING_HEX_PREFIX = 'Hex strings expected to be prefixed with 0x.';
+
+/* --------------------------- PRIVATE ---------------------------------- */
 
 function isHexPrefixed(str: string) {
   return str.substring(0, 2) === '0x';
@@ -91,24 +97,6 @@ function sanitizeHex(hex: string): string {
   return addHexPrefix(hex);
 }
 
-export function getKeyPair(privateKey: string): KeyPair {
-  return starkEc.keyFromPrivate(privateKey, 'hex');
-}
-
-export function getStarkKey(publicKey: string): string {
-  const keyPair = starkEc.keyFromPublic(publicKey, 'hex');
-  const starkKeyBn = (keyPair as any).pub.getX();
-  return sanitizeHex(starkKeyBn.toString(16));
-}
-
-export function getPrivate(keyPair: KeyPair): string {
-  return keyPair.getPrivate('hex');
-}
-
-export function getPublic(keyPair: KeyPair): string {
-  return keyPair.getPublic(true, 'hex');
-}
-
 function pedersen(input: string[]): string {
   const ZERO_BN = new BN('0');
   const one = new BN('1');
@@ -126,6 +114,56 @@ function pedersen(input: string[]): string {
     }
   }
   return point.getX().toString(16);
+}
+
+function hashMessage(
+  serialized: string,
+  token0: string,
+  token1OrPubKey: string
+) {
+  return pedersen([pedersen([token0, token1OrPubKey]), serialized]);
+}
+
+/*
+ The function _truncateToN in lib/elliptic/ec/index.js does a shift-right of 4 bits
+ in some cases. This function does the opposite operation so that
+   _truncateToN(fixMessage(msg)) == msg.
+*/
+function fixMessage(msg: string) {
+  // remove hex prefix
+  msg = removeHexPrefix(msg);
+
+  // Convert to BN to remove leading zeros.
+  msg = new BN(msg, 16).toString(16);
+
+  if (msg.length <= 62) {
+    // In this case, msg should not be transformed, as the byteLength() is at most 31,
+    // so delta < 0 (see _truncateToN).
+    return msg;
+  }
+  assert(msg.length === 63);
+  // In this case delta will be 4 so we perform a shift-left of 4 bits by adding a ZERO_BN.
+  return msg + '0';
+}
+
+/* --------------------------- PUBLIC ---------------------------------- */
+
+export function getKeyPair(privateKey: string): KeyPair {
+  return starkEc.keyFromPrivate(privateKey, 'hex');
+}
+
+export function getStarkKey(publicKey: string): string {
+  const keyPair = starkEc.keyFromPublic(publicKey, 'hex');
+  const starkKeyBn = (keyPair as any).pub.getX();
+  return sanitizeHex(starkKeyBn.toString(16));
+}
+
+export function getPrivate(keyPair: KeyPair): string {
+  return keyPair.getPrivate('hex');
+}
+
+export function getPublic(keyPair: KeyPair): string {
+  return keyPair.getPublic(true, 'hex');
 }
 
 export function deserializeMessage(serialized: string): MessageParams {
@@ -169,16 +207,8 @@ export function serializeMessage(
   return sanitizeHex(serialized.toString(16));
 }
 
-function hashMessage(
-  serialized: string,
-  token0: string,
-  token1OrPubKey: string
-) {
-  return pedersen([pedersen([token0, token1OrPubKey]), serialized]);
-}
-
 export function formatMessage(
-  instruction: 'transfer' | 'trade',
+  instruction: 'transfer' | 'order',
   vault0: string,
   vault1: string,
   amount0: string,
@@ -258,7 +288,7 @@ export function getLimitOrderMsg(
   expirationTimestamp: string
 ): string {
   const serialized = formatMessage(
-    'trade',
+    'order',
     vaultSell,
     vaultBuy,
     amountSell,
@@ -314,28 +344,6 @@ export function getTransferMsg(
     removeHexPrefix(token),
     removeHexPrefix(receiverPublicKey)
   );
-}
-
-/*
- The function _truncateToN in lib/elliptic/ec/index.js does a shift-right of 4 bits
- in some cases. This function does the opposite operation so that
-   _truncateToN(fixMessage(msg)) == msg.
-*/
-function fixMessage(msg: string) {
-  // remove hex prefix
-  msg = removeHexPrefix(msg);
-
-  // Convert to BN to remove leading zeros.
-  msg = new BN(msg, 16).toString(16);
-
-  if (msg.length <= 62) {
-    // In this case, msg should not be transformed, as the byteLength() is at most 31,
-    // so delta < 0 (see _truncateToN).
-    return msg;
-  }
-  assert(msg.length === 63);
-  // In this case delta will be 4 so we perform a shift-left of 4 bits by adding a ZERO_BN.
-  return msg + '0';
 }
 
 /*
