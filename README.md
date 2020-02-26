@@ -64,7 +64,7 @@ interface StarkwareCrypto {
   ): string;
 
   formatMessage(
-    instruction: 'transfer' | 'trade',
+    instruction: 'transfer' | 'order',
     vault0: string,
     vault1: string,
     amount0: string,
