@@ -17,6 +17,7 @@
 import BN from 'bn.js';
 import hash from 'hash.js';
 import * as elliptic from 'elliptic';
+import { keccak_256 } from 'js-sha3';
 import assert from 'assert';
 import constantPointsHex from './constantPoints';
 
@@ -33,6 +34,40 @@ export type MessageParams = {
   nonceBn: BN;
   expirationTimestampBn: BN;
 };
+
+export interface ETHTokenData {
+  quantum: string;
+}
+
+export interface ERC20TokenData {
+  quantum: string;
+  tokenAddress: string;
+}
+
+export interface ERC721TokenData {
+  tokenId: string;
+  tokenAddress: string;
+}
+
+export type TokenTypes = 'ETH' | 'ERC20' | 'ERC721';
+
+export type TokenData = ETHTokenData | ERC20TokenData | ERC721TokenData;
+
+export interface Token {
+  type: TokenTypes;
+  data: TokenData;
+}
+
+export interface TransferParams {
+  starkPublicKey: string;
+  vaultID: string;
+}
+
+export interface OrderParams {
+  vaultID: string;
+  token: Token;
+  quantizedAmount: string;
+}
 
 /* --------------------------- ELLIPTIC ---------------------------------- */
 
@@ -61,7 +96,7 @@ export const ec = starkEc;
 
 /* --------------------------- CONSTANTS ---------------------------------- */
 
-export const constantPoints = constantPointsHex.map(coords =>
+export const constantPoints = constantPointsHex.map((coords: string[]) =>
   starkEc.curve.point(new BN(coords[0], 16), new BN(coords[1], 16))
 );
 export const shiftPoint = constantPoints[0];
@@ -96,7 +131,6 @@ function sanitizeHex(hex: string): string {
   hex = hex.length % 2 !== 0 ? '0' + hex : hex;
   return addHexPrefix(hex);
 }
-
 function pedersen(input: string[]): string {
   const ZERO_BN = new BN('0');
   const one = new BN('1');
@@ -116,12 +150,19 @@ function pedersen(input: string[]): string {
   return point.getX().toString(16);
 }
 
-function hashMessage(
-  serialized: string,
-  token0: string,
-  token1OrPubKey: string
-) {
-  return pedersen([pedersen([token0, token1OrPubKey]), serialized]);
+function checkHexValue(hex: string) {
+  assert(isHexPrefixed(hex), MISSING_HEX_PREFIX);
+  const hexBn = new BN(removeHexPrefix(hex), 16);
+  assert(hexBn.gte(ZERO_BN));
+  assert(hexBn.lt(prime));
+}
+
+function parseTokenInput(token: Token | string) {
+  if (typeof token === 'string') {
+    checkHexValue(token);
+    return token;
+  }
+  return hashTokenId(token);
 }
 
 /*
@@ -164,6 +205,33 @@ export function getPrivate(keyPair: KeyPair): string {
 
 export function getPublic(keyPair: KeyPair): string {
   return keyPair.getPublic(true, 'hex');
+}
+
+export function hashTokenId(token: Token) {
+  let id: string;
+  let tokenAddress: string;
+  switch (token.type.toUpperCase()) {
+    case 'ETH':
+      id = 'ETH()';
+      break;
+    case 'ERC20':
+      tokenAddress = (token.data as ERC20TokenData).tokenAddress;
+      checkHexValue(tokenAddress);
+      id = `ERC20Token(${tokenAddress})`;
+      break;
+    case 'ERC721':
+      tokenAddress = (token.data as ERC721TokenData).tokenAddress;
+      checkHexValue(tokenAddress);
+      id = `ERC721Token(${tokenAddress})`;
+      break;
+    default:
+      throw new Error(`Unknown token type: ${token.type}`);
+  }
+  return sanitizeHex(keccak_256(id).slice(2, 10));
+}
+
+export function hashMessage(w1: string, w2: string, w3: string) {
+  return pedersen([pedersen([w1, w2]), w3]);
 }
 
 export function deserializeMessage(serialized: string): MessageParams {
@@ -213,21 +281,15 @@ export function formatMessage(
   vault1: string,
   amount0: string,
   amount1: string,
-  token0: string,
-  token1: string,
   nonce: string,
   expirationTimestamp: string
 ): string {
   const isTransfer = instruction === 'transfer';
 
-  assert(isHexPrefixed(token0) && isHexPrefixed(token1), MISSING_HEX_PREFIX);
-
   const vault0Bn = new BN(vault0);
   const vault1Bn = new BN(vault1);
   const amount0Bn = new BN(amount0, 10);
   const amount1Bn = new BN(amount1, 10);
-  const token0Bn = new BN(removeHexPrefix(token0), 16);
-  const token1Bn = new BN(removeHexPrefix(token1), 16);
   const nonceBn = new BN(nonce);
   const expirationTimestampBn = new BN(expirationTimestamp);
 
@@ -237,8 +299,6 @@ export function formatMessage(
   if (!isTransfer) {
     assert(amount1Bn.gte(ZERO_BN));
   }
-  assert(token0Bn.gte(ZERO_BN));
-  assert(token1Bn.gte(ZERO_BN));
   assert(nonceBn.gte(ZERO_BN));
   assert(expirationTimestampBn.gte(ZERO_BN));
 
@@ -246,8 +306,6 @@ export function formatMessage(
   assert(vault1Bn.lt(TWO_POW_31_BN));
   assert(amount0Bn.lt(TWO_POW_63_BN));
   assert(amount1Bn.lt(TWO_POW_63_BN));
-  assert(token0Bn.lt(prime));
-  assert(token1Bn.lt(prime));
   assert(nonceBn.lt(TWO_POW_31_BN));
   assert(expirationTimestampBn.lt(TWO_POW_22_BN));
 
@@ -264,86 +322,51 @@ export function formatMessage(
   );
 }
 
-/*
- Serializes the order message in the canonical format expected by the verifier.
- party_a sells amountSell coins of tokenSell from vaultSell.
- party_a buys amountBuy coins of tokenBuy into vaultBuy.
-
- Expected types:
- ---------------
- vaultSell, vaultBuy - uint31 (as int)
- amountSell, amountBuy - uint63 (as decimal string)
- tokenSell, tokenBuy - uint256 field element strictly less than the prime (as hex string with 0x)
- nonce - uint31 (as int)
- expirationTimestamp - uint22 (as int).
-*/
 export function getLimitOrderMsg(
   vaultSell: string,
   vaultBuy: string,
   amountSell: string,
   amountBuy: string,
-  tokenSell: string,
-  tokenBuy: string,
+  tokenSell: Token,
+  tokenBuy: Token,
   nonce: string,
   expirationTimestamp: string
 ): string {
-  const serialized = formatMessage(
+  const w1 = parseTokenInput(tokenSell);
+  const w2 = parseTokenInput(tokenBuy);
+  const w3 = formatMessage(
     'order',
     vaultSell,
     vaultBuy,
     amountSell,
     amountBuy,
-    tokenSell,
-    tokenBuy,
     nonce,
     expirationTimestamp
   );
-  return hashMessage(
-    removeHexPrefix(serialized),
-    removeHexPrefix(tokenSell),
-    removeHexPrefix(tokenBuy)
-  );
+  return hashMessage(w1, w2, w3);
 }
 
-/*
- Serializes the transfer message in the canonical format expected by the verifier.
- The sender transfer 'amount' coins of 'token' from vault with id senderVaultId to vault with id
- receiverVaultId. The receiver's public key is receiverPublicKey.
- Expected types:
- ---------------
- amount - uint63 (as decimal string)
- nonce - uint31 (as int)
- senderVaultId uint31 (as int)
- token - uint256 field element strictly less than the prime (as hex string with 0x)
- receiverVaultId - uint31 (as int)
- receiverPublicKey - uint256 field element strictly less than the prime (as hex string with 0x)
- expirationTimestamp - uint22 (as int).
-*/
 export function getTransferMsg(
   amount: string,
   nonce: string,
   senderVaultId: string,
-  token: string,
+  token: Token,
   receiverVaultId: string,
   receiverPublicKey: string,
   expirationTimestamp: string
 ) {
-  const serialized = formatMessage(
+  const w1 = parseTokenInput(token);
+  const w2 = parseTokenInput(receiverPublicKey);
+  const w3 = formatMessage(
     'transfer',
     senderVaultId,
     receiverVaultId,
     amount,
     ZERO_BN.toString(),
-    token,
-    receiverPublicKey,
     nonce,
     expirationTimestamp
   );
-  return hashMessage(
-    removeHexPrefix(serialized),
-    removeHexPrefix(token),
-    removeHexPrefix(receiverPublicKey)
-  );
+  return hashMessage(w1, w2, w3);
 }
 
 /*
