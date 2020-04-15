@@ -1,7 +1,7 @@
 {
   "name": "starkware-crypto",
   "description": "Starkware Crypto Library",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "author": "Pedro Gomes <github.com/pedrouid>",
   "license": "Apache-2.0",
   "keywords": [
@@ -39,6 +39,7 @@
   "dependencies": {
     "bn.js": "5.1.1",
     "elliptic": "6.5.2",
+    "ethereumjs-wallet": "0.6.3",
     "hash.js": "1.1.7",
     "js-sha3": "0.8.0"
   },
