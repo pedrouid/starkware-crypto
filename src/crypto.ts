@@ -11,6 +11,8 @@ import {
   ERC721TokenData,
   KeyPair,
   MessageParams,
+  Signature,
+  SignatureInput,
 } from './types';
 import { constantPointsHex } from './constants';
 
@@ -306,7 +308,7 @@ export function getTransferMsg(
   receiverVaultId: string,
   receiverPublicKey: string,
   expirationTimestamp: string
-) {
+): string {
   const w1 = parseTokenInput(token);
   const w2 = parseTokenInput(receiverPublicKey);
   const w3 = formatMessage(
@@ -323,23 +325,23 @@ export function getTransferMsg(
 
 /*
  Signs a message using the provided key.
- key should be an elliptic.keyPair with a valid private key.
- Returns an elliptic.Signature.
+ key should be an KeyPair with a valid private key.
+ Returns an Signature.
 */
-export function sign(keyPair: KeyPair, msg: string): elliptic.ec.Signature {
+export function sign(keyPair: KeyPair, msg: string): Signature {
   return keyPair.sign(fixMessage(msg));
 }
 
 /*
  Verifies a message using the provided key.
- key should be an elliptic.keyPair with a valid public key.
- msgSignature should be an elliptic.Signature.
+ key should be an KeyPair with a valid public key.
+ msgSignature should be an Signature.
  Returns a boolean true if the verification succeeds.
 */
 export function verify(
   keyPair: KeyPair,
   msg: string,
-  sig: elliptic.SignatureInput
+  sig: SignatureInput
 ): boolean {
   return keyPair.verify(fixMessage(msg), sig);
 }
