@@ -52,7 +52,7 @@ const signature = starkwareCrypto.sign(keyPair, message);
 const verified = starkwareCrypto.verify(keyPair, message, signature);
 ```
 
-### API
+## API
 
 ```typescript
 interface StarkwareCrypto {
