@@ -41,7 +41,8 @@
     "elliptic": "6.5.2",
     "ethereumjs-wallet": "0.6.3",
     "hash.js": "1.1.7",
-    "js-sha3": "0.8.0"
+    "js-sha3": "0.8.0",
+    "starkware-types": "1.0.0"
   },
   "devDependencies": {
     "@types/elliptic": "6.4.12",
