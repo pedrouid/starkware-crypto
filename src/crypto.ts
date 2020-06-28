@@ -2,6 +2,7 @@ import BN from 'bn.js';
 import hash from 'hash.js';
 import assert from 'assert';
 import * as elliptic from 'elliptic';
+import * as encUtils from 'enc-utils';
 import { keccak_256 } from 'js-sha3';
 import hdkey from 'ethereumjs-wallet/hdkey';
 
@@ -132,7 +133,35 @@ function fixMessage(msg: string) {
   return msg + '0';
 }
 
+function getBits(str: string, enc: string, n: number, fromStart = true) {
+  let bin = '';
+  if (enc === 'utf8' || enc === 'utf-8') {
+    bin = encUtils.utf8ToBinary(str);
+  } else if (enc === 'hex') {
+    bin = encUtils.hexToBinary(str);
+  } else if (enc === 'binary') {
+    bin = str;
+  } else {
+    throw new Error(`Unsupported byte encoding: ${enc}`);
+  }
+  return fromStart ? bin.slice(0, n) : bin.slice(-n);
+}
+
 /* --------------------------- PUBLIC ---------------------------------- */
+
+export function getAccountPath(
+  purpose: string,
+  layer: string,
+  application: string,
+  ethereumAddress: string,
+  index: string
+) {
+  const layerBits = getBits(layer, 'utf8', 31);
+  const applicationBits = getBits(application, 'utf8', 31);
+  const ethAddressBits1 = getBits(ethereumAddress, 'hex', 31);
+  const ethAddressBits2 = getBits(ethereumAddress, 'hex', 31, false);
+  return `m/${purpose}'/${layerBits}'/${applicationBits}'/${ethAddressBits1}'/${ethAddressBits2}'/${index}`;
+}
 
 export function getKeyPairFromPath(seed: string, path: string): KeyPair {
   const privateKey = hdkey
