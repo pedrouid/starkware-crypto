@@ -133,16 +133,21 @@ function fixMessage(msg: string) {
   return msg + '0';
 }
 
-function getBits(str: string, enc: string, n: number, fromStart = true) {
+function getBits(str: string, n: number, fromStart = true) {
+  let enc = encUtils.getEncoding(str);
   let bin = '';
-  if (enc === 'utf8' || enc === 'utf-8') {
-    bin = encUtils.utf8ToBinary(str);
-  } else if (enc === 'hex') {
-    bin = encUtils.hexToBinary(str);
-  } else if (enc === 'binary') {
-    bin = str;
-  } else {
-    throw new Error(`Unsupported byte encoding: ${enc}`);
+  switch (enc) {
+    case 'utf8':
+      bin = encUtils.utf8ToBinary(str);
+      break;
+    case 'hex':
+      bin = encUtils.hexToBinary(str);
+      break;
+    case 'binary':
+      bin = str;
+      break;
+    default:
+      throw new Error(`Unsupported byte encoding: ${enc}`);
   }
   return fromStart ? bin.slice(0, n) : bin.slice(-n);
 }
@@ -156,10 +161,18 @@ export function getAccountPath(
   ethereumAddress: string,
   index: string
 ) {
-  const layerBits = getBits(layer, 'utf8', 31);
-  const applicationBits = getBits(application, 'utf8', 31);
-  const ethAddressBits1 = getBits(ethereumAddress, 'hex', 31);
-  const ethAddressBits2 = getBits(ethereumAddress, 'hex', 31, false);
+  const layerHash = hash
+    .sha256()
+    .update(layer)
+    .digest('hex');
+  const applicationHash = hash
+    .sha256()
+    .update(application)
+    .digest('hex');
+  const layerBits = getBits(layerHash, 31);
+  const applicationBits = getBits(applicationHash, 31);
+  const ethAddressBits1 = getBits(ethereumAddress, 31);
+  const ethAddressBits2 = getBits(ethereumAddress, 31, false);
   return `m/${purpose}'/${layerBits}'/${applicationBits}'/${ethAddressBits1}'/${ethAddressBits2}'/${index}`;
 }
 
