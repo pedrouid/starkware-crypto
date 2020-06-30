@@ -24,6 +24,16 @@ export const prime = new BN(
   16
 );
 
+export const order = new BN(
+  '08000000 00000010 ffffffff ffffffff b781126d cae7b232 1e66a241 adc64d2f',
+  16
+);
+
+export const secpOrder = new BN(
+  'FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFE BAAEDCE6 AF48A03B BFD25E8C D0364141',
+  16
+);
+
 const starkEc = new elliptic.ec(
   new elliptic.curves.PresetCurve({
     type: 'short',
@@ -33,8 +43,7 @@ const starkEc = new elliptic.ec(
       '00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000001',
     b:
       '06f21413 efbe40de 150e596d 72f7a8c5 609ad26c 15c915c1 f4cdfcb9 9cee9e89',
-    n:
-      '08000000 00000010 ffffffff ffffffff b781126d cae7b232 1e66a241 adc64d2f',
+    n: order as any,
     hash: hash.sha256,
     gRed: false,
     g: constantPointsHex[1],
@@ -133,6 +142,24 @@ function fixMessage(msg: string) {
   return msg + '0';
 }
 
+function grindKey(privateKey: string): string {
+  var i = 0;
+  let key;
+  while (true) {
+    key = new BN(
+      hash
+        .sha256()
+        .update(`${privateKey}${i}`)
+        .digest('hex'),
+      16
+    );
+    if (key.lt(secpOrder.sub(secpOrder.mod(order)))) {
+      return key.mod(order).toString(16, 32);
+    }
+    i++;
+  }
+}
+
 function getBits(str: string, n: number, fromStart = true) {
   let enc = encUtils.getEncoding(str);
   let bin = '';
@@ -186,7 +213,7 @@ export function getKeyPairFromPath(seed: string, path: string): KeyPair {
 }
 
 export function getKeyPair(privateKey: string): KeyPair {
-  return starkEc.keyFromPrivate(privateKey, 'hex');
+  return starkEc.keyFromPrivate(grindKey(privateKey), 'hex');
 }
 
 export function getStarkKey(publicKey: string): string {
