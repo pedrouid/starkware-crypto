@@ -160,29 +160,16 @@ function grindKey(privateKey: string): string {
   }
 }
 
-function getBits(str: string, n: number, fromStart = true) {
-  let enc = encUtils.getEncoding(str);
-  let bin = '';
-  switch (enc) {
-    case 'utf8':
-      bin = encUtils.utf8ToBinary(str);
-      break;
-    case 'hex':
-      bin = encUtils.hexToBinary(str);
-      break;
-    case 'binary':
-      bin = str;
-      break;
-    default:
-      throw new Error(`Unsupported byte encoding: ${enc}`);
-  }
-  return fromStart ? bin.slice(0, n) : bin.slice(-n);
+function getInteger(hex: string, n: number, fromStart = true): number {
+  let bin = encUtils.hexToBinary(hex);
+  let bits = fromStart ? bin.slice(0, n) : bin.slice(-n);
+  let int = encUtils.binaryToNumber(bits);
+  return int;
 }
 
 /* --------------------------- PUBLIC ---------------------------------- */
 
 export function getAccountPath(
-  purpose: string,
   layer: string,
   application: string,
   ethereumAddress: string,
@@ -196,11 +183,11 @@ export function getAccountPath(
     .sha256()
     .update(application)
     .digest('hex');
-  const layerBits = getBits(layerHash, 31);
-  const applicationBits = getBits(applicationHash, 31);
-  const ethAddressBits1 = getBits(ethereumAddress, 31);
-  const ethAddressBits2 = getBits(ethereumAddress, 31, false);
-  return `m/${purpose}'/${layerBits}'/${applicationBits}'/${ethAddressBits1}'/${ethAddressBits2}'/${index}`;
+  const layerInt = getInteger(layerHash, 31);
+  const applicationInt = getInteger(applicationHash, 31);
+  const ethAddressInt1 = getInteger(ethereumAddress, 31);
+  const ethAddressInt2 = getInteger(ethereumAddress, 31, false);
+  return `m/2645'/${layerInt}'/${applicationInt}'/${ethAddressInt1}'/${ethAddressInt2}'/${index}`;
 }
 
 export function getKeyPairFromPath(seed: string, path: string): KeyPair {
@@ -226,8 +213,8 @@ export function getPrivate(keyPair: KeyPair): string {
   return keyPair.getPrivate('hex');
 }
 
-export function getPublic(keyPair: KeyPair): string {
-  return keyPair.getPublic(true, 'hex');
+export function getPublic(keyPair: KeyPair, compressed = true): string {
+  return keyPair.getPublic(compressed, 'hex');
 }
 
 export function hashTokenId(token: Token) {

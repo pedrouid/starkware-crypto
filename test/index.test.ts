@@ -25,6 +25,21 @@ describe('starkware-crypto', () => {
     );
   });
 
+  it('should generate path from params', () => {
+    const path = starkwareCrypto.getAccountPath(
+      'starkware',
+      'starkexdvf',
+      '0xF1cAbDCa0070727B3c736c62aC44fB373c0eab0a',
+      '0'
+    );
+    console.log('path', path);
+    expect(path).toBeTruthy();
+  });
+
+  // it('should match expected publicKey', () => {
+  //   expect(starkwareCrypto.getPublic(keyPair, false)).toEqual(starkPublicKey);
+  // });
+
   it('should generate starkKey', () => {
     const publicKey = starkwareCrypto.getPublic(keyPair);
     const starkKey = starkwareCrypto.getStarkKey(publicKey);
