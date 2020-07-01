@@ -160,9 +160,13 @@ function grindKey(privateKey: string): string {
   }
 }
 
-function getInteger(hex: string, n: number, fromStart = true): number {
+function getIntFromBits(
+  hex: string,
+  start: number,
+  end: number | undefined = undefined
+): number {
   let bin = encUtils.hexToBinary(hex);
-  let bits = fromStart ? bin.slice(0, n) : bin.slice(-n);
+  let bits = bin.slice(start, end);
   let int = encUtils.binaryToNumber(bits);
   return int;
 }
@@ -183,10 +187,10 @@ export function getAccountPath(
     .sha256()
     .update(application)
     .digest('hex');
-  const layerInt = getInteger(layerHash, 31);
-  const applicationInt = getInteger(applicationHash, 31);
-  const ethAddressInt1 = getInteger(ethereumAddress, 31);
-  const ethAddressInt2 = getInteger(ethereumAddress, 31, false);
+  const layerInt = getIntFromBits(layerHash, -31);
+  const applicationInt = getIntFromBits(applicationHash, -31);
+  const ethAddressInt1 = getIntFromBits(ethereumAddress, -31);
+  const ethAddressInt2 = getIntFromBits(ethereumAddress, -62, -31);
   return `m/2645'/${layerInt}'/${applicationInt}'/${ethAddressInt1}'/${ethAddressInt2}'/${index}`;
 }
 

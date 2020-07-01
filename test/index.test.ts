@@ -1,20 +1,21 @@
-// import hdkey from 'ethereumjs-wallet/hdkey';
+import hdkey from 'ethereumjs-wallet/hdkey';
 
 import * as starkwareCrypto from '../src';
 
-// const ethDerivationPath = `m/44'/60'/0'/0'/0`;
-// const ethPublicKey = `04beb0169f94d7f4d9b9bdbb67732c3c9c1d13977cc2bb73fc6f6a783e992ae66f169857d3bc9b2e6e02417180a9486a8172268b2e9b33f35c2685875ec4066370`;
-// const ethAddress = `0xF1cAbDCa0070727B3c736c62aC44fB373c0eab0a`;
-// const ethWallet = hdkey
-//   .fromMasterSeed(seedPhrase)
-//   .derivePath(ethDerivationPath)
-//   .getWallet();
 const seedPhrase =
   'puzzle number lab sense puzzle escape glove faith strike poem acoustic picture grit struggle know tuna soul indoor thumb dune fit job timber motor';
 
-const starkDerivationPath = `m/2645'/579218131'/1393043894'/0'/0'/0`;
-// const starkPublicKey =
-//   '04042582cfcb098a503562acd1325922799c9cebdf9249c26a41bd04007997f2eb03b73cdb07f399130ea38ee860c3b708c92165df37b1690d7e0af1678ecdaff8';
+const layer = 'starkex';
+const application = 'starkexdvf';
+
+const ethDerivationPath = "m/44'/60'/0'/0";
+const ethWallet = hdkey
+  .fromMasterSeed(seedPhrase)
+  .derivePath(ethDerivationPath)
+  .getWallet();
+const ethAddress = '0x' + ethWallet.getAddress().toString('hex');
+
+const starkDerivationPath = `m/2645'/579218131'/1393043894'/640221585'/726031065'/0`;
 
 describe('starkware-crypto', () => {
   let keyPair: starkwareCrypto.KeyPair;
@@ -27,18 +28,13 @@ describe('starkware-crypto', () => {
 
   it('should generate path from params', () => {
     const path = starkwareCrypto.getAccountPath(
-      'starkware',
-      'starkexdvf',
-      '0xF1cAbDCa0070727B3c736c62aC44fB373c0eab0a',
+      layer,
+      application,
+      ethAddress,
       '0'
     );
-    console.log('path', path);
-    expect(path).toBeTruthy();
+    expect(path).toEqual(starkDerivationPath);
   });
-
-  // it('should match expected publicKey', () => {
-  //   expect(starkwareCrypto.getPublic(keyPair, false)).toEqual(starkPublicKey);
-  // });
 
   it('should generate starkKey', () => {
     const publicKey = starkwareCrypto.getPublic(keyPair);
