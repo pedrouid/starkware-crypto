@@ -1,29 +1,28 @@
+import * as bip39 from 'bip39';
 import hdkey from 'ethereumjs-wallet/hdkey';
 
 import * as starkwareCrypto from '../src';
 
-const seedPhrase =
+const mnemonic =
   'puzzle number lab sense puzzle escape glove faith strike poem acoustic picture grit struggle know tuna soul indoor thumb dune fit job timber motor';
 
 const layer = 'starkex';
 const application = 'starkexdvf';
 
-const ethDerivationPath = "m/44'/60'/0'/0";
+const ethDerivationPath = `m/44'/60'/0'/0'/0`;
 const ethWallet = hdkey
-  .fromMasterSeed(seedPhrase)
+  .fromMasterSeed(bip39.mnemonicToSeedSync(mnemonic))
   .derivePath(ethDerivationPath)
   .getWallet();
-const ethAddress = '0x' + ethWallet.getAddress().toString('hex');
+const ethAddress = ethWallet.getAddressString();
+console.log(ethAddress);
 
-const starkDerivationPath = `m/2645'/579218131'/1393043894'/640221585'/726031065'/0`;
+const starkDerivationPath = `m/2645'/579218131'/1393043894'/1007594250'/1485436526'/0`;
 
 describe('starkware-crypto', () => {
   let keyPair: starkwareCrypto.KeyPair;
   beforeEach(() => {
-    keyPair = starkwareCrypto.getKeyPairFromPath(
-      seedPhrase,
-      starkDerivationPath
-    );
+    keyPair = starkwareCrypto.getKeyPairFromPath(mnemonic, starkDerivationPath);
   });
 
   it('should generate path from params', () => {
