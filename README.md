@@ -11,10 +11,16 @@ This library is a port from [starkex-resources/\*\*/signature.js](https://github
 ```typescript
 import * as starkwareCrypto from 'starkware-crypto';
 
-const privateKey =
-  '0x659d82c1cc4c3e6fead938999322116a3dc7854b415b822dbea42630ecd90b5e';
+const mnemonic = '';
 
-const keyPair = starkwareCrypto.getKeyPair(privateKey);
+const path = getAccountPath(
+  'starkex',
+  'starkexdvf',
+  '0x0000000000000000000000000000000000000000',
+  '0'
+);
+
+const keyPair = starkwareCrypto.getKeyPairFromPath(mnemonic, path);
 
 const publicKey = starkwareCrypto.getPublic(keyPair);
 
@@ -56,6 +62,13 @@ const verified = starkwareCrypto.verify(keyPair, message, signature);
 
 ```typescript
 interface StarkwareCrypto {
+  getAccountPath(
+    layer: string,
+    application: string,
+    ethereumAddress: string,
+    index: string
+  ): string;
+
   getKeyPairFromPath(mnemonic: string, path: string): KeyPair;
 
   getKeyPair(privateKey: string): KeyPair;
@@ -64,7 +77,7 @@ interface StarkwareCrypto {
 
   getPrivate(keyPair: KeyPair): string;
 
-  getPublic(keyPair: KeyPair): string;
+  getPublic(keyPair: KeyPair, compressed?: boolean): string;
 
   hashTokenId(token: Token);
 

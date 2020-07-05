@@ -182,7 +182,7 @@ export function getAccountPath(
   application: string,
   ethereumAddress: string,
   index: string
-) {
+): string {
   const layerHash = hashJS
     .sha256()
     .update(layer)

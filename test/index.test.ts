@@ -6,7 +6,7 @@ const mnemonic =
   'puzzle number lab sense puzzle escape glove faith strike poem acoustic picture grit struggle know tuna soul indoor thumb dune fit job timber motor';
 const layer = 'starkex';
 const application = 'starkexdvf';
-const zeroAddress = '0x' + '0'.repeat(40);
+const zeroAddress = '0x0000000000000000000000000000000000000000';
 const index = '0';
 
 // ---------------------- EXPECTED DATA POINTS ---------------------- //
