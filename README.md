@@ -56,7 +56,7 @@ const verified = starkwareCrypto.verify(keyPair, message, signature);
 
 ```typescript
 interface StarkwareCrypto {
-  getKeyPairFromPath(seed: string, path: string): KeyPair;
+  getKeyPairFromPath(mnemonic: string, path: string): KeyPair;
 
   getKeyPair(privateKey: string): KeyPair;
 

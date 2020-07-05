@@ -1,5 +1,5 @@
-import * as bip39 from 'bip39';
-import hdkey from 'ethereumjs-wallet/hdkey';
+// import * as bip39 from 'bip39';
+// import hdkey from 'ethereumjs-wallet/hdkey';
 
 import * as starkwareCrypto from '../src';
 
@@ -9,15 +9,17 @@ const mnemonic =
 const layer = 'starkex';
 const application = 'starkexdvf';
 
-const ethDerivationPath = `m/44'/60'/0'/0'/0`;
-const ethWallet = hdkey
-  .fromMasterSeed(bip39.mnemonicToSeedSync(mnemonic))
-  .derivePath(ethDerivationPath)
-  .getWallet();
-const ethAddress = ethWallet.getAddressString();
-console.log(ethAddress);
+// const ethDerivationPath = `m/44'/60'/0'/0'/0`;
+// const ethWallet = hdkey
+//   .fromMasterSeed(bip39.mnemonicToSeedSync(mnemonic))
+//   .derivePath(ethDerivationPath)
+//   .getWallet();
+// 0xf1cabdca0070727b3c736c62ac44fb373c0eab0a
+// const ethAddress = ethWallet.getAddressString();
 
-const starkDerivationPath = `m/2645'/579218131'/1393043894'/1007594250'/1485436526'/0`;
+const starkDerivationPath = `m/2645'/579218131'/1393043894'/0'/0'/0`;
+
+const zeroAddress = '0x' + '0'.repeat(40);
 
 describe('starkware-crypto', () => {
   let keyPair: starkwareCrypto.KeyPair;
@@ -29,7 +31,7 @@ describe('starkware-crypto', () => {
     const path = starkwareCrypto.getAccountPath(
       layer,
       application,
-      ethAddress,
+      zeroAddress,
       '0'
     );
     expect(path).toEqual(starkDerivationPath);

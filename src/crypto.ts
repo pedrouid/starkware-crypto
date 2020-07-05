@@ -1,6 +1,7 @@
 import BN from 'bn.js';
-import hash from 'hash.js';
+import hashJS from 'hash.js';
 import assert from 'assert';
+import * as bip39 from 'bip39';
 import * as elliptic from 'elliptic';
 import * as encUtils from 'enc-utils';
 import { keccak_256 } from 'js-sha3';
@@ -44,7 +45,7 @@ const starkEc = new elliptic.ec(
     b:
       '06f21413 efbe40de 150e596d 72f7a8c5 609ad26c 15c915c1 f4cdfcb9 9cee9e89',
     n: order as any,
-    hash: hash.sha256,
+    hash: hashJS.sha256,
     gRed: false,
     g: constantPointsHex[1],
   })
@@ -143,20 +144,23 @@ function fixMessage(msg: string) {
 }
 
 function grindKey(privateKey: string): string {
-  var i = 0;
-  let key;
+  const key = new BN(
+    hashJS
+      .sha256()
+      .update(
+        Buffer.concat([
+          new BN(removeHexPrefix(privateKey), 16).toBuffer('be'),
+          new BN(0).toBuffer('be'),
+        ])
+      )
+      .digest('hex'),
+    16
+  );
+
   while (true) {
-    key = new BN(
-      hash
-        .sha256()
-        .update(`${privateKey}${i}`)
-        .digest('hex'),
-      16
-    );
     if (key.lt(secpOrder.sub(secpOrder.mod(order)))) {
-      return key.mod(order).toString(16, 32);
+      return key.mod(order).toString('hex');
     }
-    i++;
   }
 }
 
@@ -179,11 +183,11 @@ export function getAccountPath(
   ethereumAddress: string,
   index: string
 ) {
-  const layerHash = hash
+  const layerHash = hashJS
     .sha256()
     .update(layer)
     .digest('hex');
-  const applicationHash = hash
+  const applicationHash = hashJS
     .sha256()
     .update(application)
     .digest('hex');
@@ -194,12 +198,13 @@ export function getAccountPath(
   return `m/2645'/${layerInt}'/${applicationInt}'/${ethAddressInt1}'/${ethAddressInt2}'/${index}`;
 }
 
-export function getKeyPairFromPath(seed: string, path: string): KeyPair {
+export function getKeyPairFromPath(mnemonic: string, path: string): KeyPair {
+  const seed = bip39.mnemonicToSeedSync(mnemonic).toString('hex');
   const privateKey = hdkey
-    .fromMasterSeed(seed)
+    .fromMasterSeed(Buffer.from(seed, 'hex'))
     .derivePath(path)
     .getWallet()
-    .getPrivateKey();
+    .getPrivateKeyString();
   return getKeyPair(privateKey);
 }
 
