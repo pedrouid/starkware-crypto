@@ -212,17 +212,17 @@ export function getKeyPair(privateKey: string): KeyPair {
   return starkEc.keyFromPrivate(grindKey(privateKey), 'hex');
 }
 
-export function getStarkKey(publicKey: string): string {
+export function getStarkPublicKey(publicKey: string): string {
   const keyPair = starkEc.keyFromPublic(publicKey, 'hex');
-  const starkKeyBn = (keyPair as any).pub.getX();
-  return sanitizeHex(starkKeyBn.toString(16));
+  const starkPublicKeyBn = (keyPair as any).pub.getX();
+  return sanitizeHex(starkPublicKeyBn.toString(16));
 }
 
 export function getPrivate(keyPair: KeyPair): string {
   return keyPair.getPrivate('hex');
 }
 
-export function getPublic(keyPair: KeyPair, compressed = true): string {
+export function getPublic(keyPair: KeyPair, compressed = false): string {
   return keyPair.getPublic(compressed, 'hex');
 }
 

@@ -18,7 +18,7 @@ const keyPair = starkwareCrypto.getKeyPair(privateKey);
 
 const publicKey = starkwareCrypto.getPublic(keyPair);
 
-const starkKey = starkwareCrypto.getStarkKey(publicKey);
+const starkPublicKey = starkwareCrypto.getStarkPublicKey(publicKey);
 
 const msgParams = {
   amount: '2154549703648910716',
@@ -60,7 +60,7 @@ interface StarkwareCrypto {
 
   getKeyPair(privateKey: string): KeyPair;
 
-  getStarkKey(publicKey: string): string;
+  getStarkPublicKey(publicKey: string): string;
 
   getPrivate(keyPair: KeyPair): string;
 

@@ -1,46 +1,55 @@
-// import * as bip39 from 'bip39';
-// import hdkey from 'ethereumjs-wallet/hdkey';
-
 import * as starkwareCrypto from '../src';
+
+// ---------------------- TEST DATA POINTS ---------------------- //
 
 const mnemonic =
   'puzzle number lab sense puzzle escape glove faith strike poem acoustic picture grit struggle know tuna soul indoor thumb dune fit job timber motor';
-
 const layer = 'starkex';
 const application = 'starkexdvf';
-
-// const ethDerivationPath = `m/44'/60'/0'/0'/0`;
-// const ethWallet = hdkey
-//   .fromMasterSeed(bip39.mnemonicToSeedSync(mnemonic))
-//   .derivePath(ethDerivationPath)
-//   .getWallet();
-// 0xf1cabdca0070727b3c736c62ac44fb373c0eab0a
-// const ethAddress = ethWallet.getAddressString();
-
-const starkDerivationPath = `m/2645'/579218131'/1393043894'/0'/0'/0`;
-
 const zeroAddress = '0x' + '0'.repeat(40);
+const index = '0';
+
+// ---------------------- EXPECTED DATA POINTS ---------------------- //
+
+const STARK_DERIVATION_PATH = `m/2645'/579218131'/1393043894'/0'/0'/0`;
+const PUBLIC_KEY =
+  '04042582cfcb098a503562acd1325922799c9cebdf9249c26a41bd04007997f2eb03b73cdb07f399130ea38ee860c3b708c92165df37b1690d7e0af1678ecdaff8';
+const PUBLIC_KEY_COMPRESSED =
+  '02042582cfcb098a503562acd1325922799c9cebdf9249c26a41bd04007997f2eb';
+const STARK_PUBLIC_KEY =
+  '0x042582cfcb098a503562acd1325922799c9cebdf9249c26a41bd04007997f2eb';
 
 describe('starkware-crypto', () => {
+  let path: string;
   let keyPair: starkwareCrypto.KeyPair;
   beforeEach(() => {
-    keyPair = starkwareCrypto.getKeyPairFromPath(mnemonic, starkDerivationPath);
-  });
-
-  it('should generate path from params', () => {
-    const path = starkwareCrypto.getAccountPath(
+    path = starkwareCrypto.getAccountPath(
       layer,
       application,
       zeroAddress,
-      '0'
+      index
     );
-    expect(path).toEqual(starkDerivationPath);
+    keyPair = starkwareCrypto.getKeyPairFromPath(mnemonic, path);
   });
 
-  it('should generate starkKey', () => {
+  it('should match expected derivation path', () => {
+    expect(path).toEqual(STARK_DERIVATION_PATH);
+  });
+
+  it('should match expected public key', () => {
     const publicKey = starkwareCrypto.getPublic(keyPair);
-    const starkKey = starkwareCrypto.getStarkKey(publicKey);
-    expect(starkKey).toBeTruthy();
+    expect(publicKey).toEqual(PUBLIC_KEY);
+  });
+
+  it('should match expected public key compressed', () => {
+    const publicKey = starkwareCrypto.getPublic(keyPair, true);
+    expect(publicKey).toEqual(PUBLIC_KEY_COMPRESSED);
+  });
+
+  it('should generate starkPublicKey', () => {
+    const publicKey = starkwareCrypto.getPublic(keyPair);
+    const starkPublicKey = starkwareCrypto.getStarkPublicKey(publicKey);
+    expect(starkPublicKey).toEqual(STARK_PUBLIC_KEY);
   });
 
   it('should generate and sign transfer message', () => {
