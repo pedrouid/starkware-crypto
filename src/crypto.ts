@@ -74,26 +74,10 @@ function isHexPrefixed(str: string) {
   return str.substring(0, 2) === '0x';
 }
 
-function removeHexPrefix(hex: string): string {
-  return hex.replace(/^0x/, '');
-}
-
-function addHexPrefix(hex: string): string {
-  return isHexPrefixed(hex) ? hex : `0x${hex}`;
-}
-
-function sanitizeHex(hex: string): string {
-  hex = removeHexPrefix(hex);
-  if (hex === '') {
-    return '';
-  }
-  hex = hex.length % 2 !== 0 ? '0' + hex : hex;
-  return addHexPrefix(hex);
-}
 function pedersen(input) {
   let point = shiftPoint;
   for (let i = 0; i < input.length; i++) {
-    let x = new BN(removeHexPrefix(input[i]), 16);
+    let x = new BN(encUtils.removeHexPrefix(input[i]), 16);
     assert(x.gte(ZERO_BN) && x.lt(prime), 'Invalid input: ' + input[i]);
     for (let j = 0; j < 252; j++) {
       const pt = constantPoints[2 + i * 252 + j];
@@ -109,7 +93,7 @@ function pedersen(input) {
 
 function checkHexValue(hex: string) {
   assert(isHexPrefixed(hex), MISSING_HEX_PREFIX);
-  const hexBn = new BN(removeHexPrefix(hex), 16);
+  const hexBn = new BN(encUtils.removeHexPrefix(hex), 16);
   assert(hexBn.gte(ZERO_BN));
   assert(hexBn.lt(prime));
 }
@@ -129,7 +113,7 @@ function parseTokenInput(token: Token | string) {
 */
 function fixMessage(msg: string) {
   // remove hex prefix
-  msg = removeHexPrefix(msg);
+  msg = encUtils.removeHexPrefix(msg);
 
   // Convert to BN to remove leading zeros.
   msg = new BN(msg, 16).toString(16);
@@ -148,12 +132,7 @@ function grindKey(privateKey: string): string {
   const key = new BN(
     hashJS
       .sha256()
-      .update(
-        Buffer.concat([
-          new BN(removeHexPrefix(privateKey), 16).toBuffer('be'),
-          new BN(0).toBuffer('be'),
-        ])
-      )
+      .update(encUtils.hexToBuffer(encUtils.removeHexPrefix(privateKey) + '00'))
       .digest('hex'),
     16
   );
@@ -216,7 +195,7 @@ export function getKeyPair(privateKey: string): KeyPair {
 export function getStarkPublicKey(publicKey: string): string {
   const keyPair = starkEc.keyFromPublic(publicKey, 'hex');
   const starkPublicKeyBn = (keyPair as any).pub.getX();
-  return sanitizeHex(starkPublicKeyBn.toString(16));
+  return encUtils.sanitizeHex(starkPublicKeyBn.toString(16));
 }
 
 export function getPrivate(keyPair: KeyPair): string {
@@ -247,7 +226,7 @@ export function hashTokenId(token: Token) {
     default:
       throw new Error(`Unknown token type: ${token.type}`);
   }
-  return sanitizeHex(keccak_256(id).slice(2, 10));
+  return encUtils.sanitizeHex(keccak_256(id).slice(2, 10));
 }
 
 export function hashMessage(w1: string, w2: string, w3: string) {
@@ -255,7 +234,7 @@ export function hashMessage(w1: string, w2: string, w3: string) {
 }
 
 export function deserializeMessage(serialized: string): MessageParams {
-  serialized = removeHexPrefix(serialized);
+  serialized = encUtils.removeHexPrefix(serialized);
   const slice0 = 0;
   const slice1 = slice0 + 1;
   const slice2 = slice1 + 31;
@@ -292,7 +271,7 @@ export function serializeMessage(
   serialized = serialized.ushln(63).add(amount1Bn);
   serialized = serialized.ushln(31).add(nonceBn);
   serialized = serialized.ushln(22).add(expirationTimestampBn);
-  return sanitizeHex(serialized.toString(16));
+  return encUtils.sanitizeHex(serialized.toString(16));
 }
 
 export function formatMessage(
@@ -417,11 +396,11 @@ export function exportRecoveryParam(recoveryParam: number | null): string {
 }
 
 export function importRecoveryParam(v: string): number {
-  return new BN(v, 'hex').sub(new BN(27)).toNumber();
+  return new BN(v, 16).sub(new BN(27)).toNumber();
 }
 
 export function serializeSignature(sig: Signature): string {
-  return addHexPrefix(
+  return encUtils.addHexPrefix(
     sig.r.toString(16) +
       sig.s.toString(16) +
       exportRecoveryParam(sig.recoveryParam)
@@ -429,7 +408,7 @@ export function serializeSignature(sig: Signature): string {
 }
 
 export function deserializeSignature(sig: string): SignatureOptions {
-  sig = removeHexPrefix(sig);
+  sig = encUtils.removeHexPrefix(sig);
   return {
     r: new BN(sig.substring(0, 64), 'hex'),
     s: new BN(sig.substring(64, 128), 'hex'),
