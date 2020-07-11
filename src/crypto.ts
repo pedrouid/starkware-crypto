@@ -5,7 +5,7 @@ import * as bip39 from 'bip39';
 import * as elliptic from 'elliptic';
 import * as encUtils from 'enc-utils';
 import { keccak_256 } from 'js-sha3';
-import hdkey from 'ethereumjs-wallet/hdkey';
+import { hdkey } from 'ethereumjs-wallet';
 
 import {
   Token,
