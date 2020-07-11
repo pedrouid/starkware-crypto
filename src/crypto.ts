@@ -15,6 +15,7 @@ import {
   MessageParams,
   Signature,
   SignatureInput,
+  SignatureOptions,
 } from './types';
 import { constantPointsHex } from './constants';
 
@@ -409,4 +410,29 @@ export function verify(
   sig: SignatureInput
 ): boolean {
   return keyPair.verify(fixMessage(msg), sig);
+}
+
+export function exportRecoveryParam(recoveryParam: number | null): string {
+  return new BN(recoveryParam || 0).add(new BN(27)).toString(16);
+}
+
+export function importRecoveryParam(v: string): number {
+  return new BN(v, 'hex').sub(new BN(27)).toNumber();
+}
+
+export function serializeSignature(sig: Signature): string {
+  return addHexPrefix(
+    sig.r.toString(16) +
+      sig.s.toString(16) +
+      exportRecoveryParam(sig.recoveryParam)
+  );
+}
+
+export function deserializeSignature(sig: string): SignatureOptions {
+  sig = removeHexPrefix(sig);
+  return {
+    r: new BN(sig.substring(0, 64), 'hex'),
+    s: new BN(sig.substring(64, 128), 'hex'),
+    recoveryParam: importRecoveryParam(sig.substring(128, 130)),
+  };
 }

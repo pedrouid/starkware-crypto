@@ -18,6 +18,8 @@ const PUBLIC_KEY_COMPRESSED =
   '02042582cfcb098a503562acd1325922799c9cebdf9249c26a41bd04007997f2eb';
 const STARK_PUBLIC_KEY =
   '0x042582cfcb098a503562acd1325922799c9cebdf9249c26a41bd04007997f2eb';
+const STARK_SIGNATURE =
+  '0x7130036cfee14ee468f84538da0b2c71f11908f3dcc4c0b7fb28c2e0c8504d1e4e3191d2adb180a2ec31eff2366381e2ec807426f232a6cae2387d6d7886e1c';
 
 describe('starkware-crypto', () => {
   let path: string;
@@ -82,10 +84,12 @@ describe('starkware-crypto', () => {
 
     const signature = starkwareCrypto.sign(keyPair, message);
 
+    expect(starkwareCrypto.serializeSignature(signature)).toEqual(
+      STARK_SIGNATURE
+    );
+
     const verified = starkwareCrypto.verify(keyPair, message, signature);
 
     expect(verified).toBeTruthy();
   });
-
-  // it('should ');
 });

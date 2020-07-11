@@ -129,6 +129,14 @@ interface StarkwareCrypto {
   sign(keyPair: KeyPair, msg: string): Signature;
 
   verify(keyPair: KeyPair, msg: string, sig: SignatureInput): boolean;
+
+  exportRecoveryParam(recoveryParam: number | null): string;
+
+  importRecoveryParam(v: string): number;
+
+  serializeSignature(sig: Signature): string;
+
+  deserializeSignature(sig: string): SignatureOptions;
 }
 ```
 
