@@ -128,20 +128,30 @@ function fixMessage(msg: string) {
   return msg + '0';
 }
 
-function grindKey(privateKey: string): string {
-  const key = new BN(
+function hashKeyWithIndex(key: string, index: number): BN {
+  return new BN(
     hashJS
       .sha256()
-      .update(encUtils.hexToBuffer(encUtils.removeHexPrefix(privateKey) + '00'))
+      .update(
+        encUtils.hexToBuffer(
+          encUtils.removeHexPrefix(key) +
+            encUtils.sanitizeBytes(encUtils.numberToHex(index), 2)
+        )
+      )
       .digest('hex'),
     16
   );
+}
 
-  while (true) {
-    if (key.lt(secpOrder.sub(secpOrder.mod(order)))) {
-      return key.mod(order).toString('hex');
-    }
+function grindKey(privateKey: string): string {
+  let i = 0;
+  let key: BN = hashKeyWithIndex(privateKey, i);
+
+  while (!key.lt(secpOrder.sub(secpOrder.mod(order)))) {
+    key = hashKeyWithIndex(key.toString(16), i);
+    i = i++;
   }
+  return key.mod(order).toString('hex');
 }
 
 function getIntFromBits(

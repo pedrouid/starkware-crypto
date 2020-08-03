@@ -2702,10 +2702,10 @@ emojis-list@^3.0.0:
   resolved "https://registry.yarnpkg.com/emojis-list/-/emojis-list-3.0.0.tgz#5570662046ad29e2e916e71aae260abdff4f6a78"
   integrity sha512-/kyM18EfinwXZbno9FyUGeFh87KC8HRQBQGildHZbEuRyWFOmv1U10o9BBp8XVZDVNNuQKyIGIu5ZYAAXJ0V2Q==
 
-enc-utils@2.2.1:
-  version "2.2.1"
-  resolved "https://registry.yarnpkg.com/enc-utils/-/enc-utils-2.2.1.tgz#4e3530fde49afc06b5aa71522b9846cbf88ffdd4"
-  integrity sha512-BU+BGgm7xt8jSgpIgiKnxnYT4gNY52hD2QBmSFbOy7xw7PYp1UmnhsSeWFe/OVdm7qL+hJI1QvpOWAV3JqshbQ==
+enc-utils@2.2.2:
+  version "2.2.2"
+  resolved "https://registry.yarnpkg.com/enc-utils/-/enc-utils-2.2.2.tgz#d191619b077d1314ef319a9962640a0fcf9eb13b"
+  integrity sha512-gdWLQsnxYYhFRPrSCPrxsqX/4xXxAcb+63u65pdBBmCA/GKhGfZjXKKWse6UfMXc8Nlvz6jKPtRoCDhYo8Kiaw==
   dependencies:
     bn.js "4.11.8"
     is-typedarray "1.0.0"

@@ -40,7 +40,7 @@
     "bip39": "3.0.2",
     "bn.js": "5.1.2",
     "elliptic": "6.5.3",
-    "enc-utils": "2.2.1",
+    "enc-utils": "2.2.2",
     "ethereumjs-wallet": "1.0.0",
     "hash.js": "1.1.7",
     "js-sha3": "0.8.0",
