@@ -68,6 +68,10 @@ const TWO_POW_63_BN = new BN('8000000000000000', 16);
 
 const MISSING_HEX_PREFIX = 'Hex strings expected to be prefixed with 0x.';
 
+const PRIVATE_KEY_IS_HEX_PREFIXED = 'Private key must not be prefixed with 0x.';
+
+// const PRIVATE_KEY_NOT_GRINDED = 'Private key is not grinded properly.';
+
 /* --------------------------- PRIVATE ---------------------------------- */
 
 function isHexPrefixed(str: string) {
@@ -143,15 +147,8 @@ function hashKeyWithIndex(key: string, index: number): BN {
   );
 }
 
-function grindKey(privateKey: string): string {
-  let i = 0;
-  let key: BN = hashKeyWithIndex(privateKey, i);
-
-  while (!key.lt(secpOrder.sub(secpOrder.mod(order)))) {
-    key = hashKeyWithIndex(key.toString(16), i);
-    i = i++;
-  }
-  return key.mod(order).toString('hex');
+function isGrinded(privateKey: string): boolean {
+  return new BN(privateKey, 16).lt(secpOrder.sub(secpOrder.mod(order)));
 }
 
 function getIntFromBits(
@@ -166,6 +163,17 @@ function getIntFromBits(
 }
 
 /* --------------------------- PUBLIC ---------------------------------- */
+
+export function grindKey(privateKey: string): string {
+  let i = 0;
+  let key: BN = hashKeyWithIndex(privateKey, i);
+
+  while (!isGrinded(key.toString(16))) {
+    key = hashKeyWithIndex(key.toString(16), i);
+    i = i++;
+  }
+  return key.mod(order).toString('hex');
+}
 
 export function getAccountPath(
   layer: string,
@@ -195,11 +203,13 @@ export function getKeyPairFromPath(mnemonic: string, path: string): KeyPair {
     .derivePath(path)
     .getWallet()
     .getPrivateKeyString();
-  return getKeyPair(privateKey);
+  return getKeyPair(grindKey(privateKey));
 }
 
 export function getKeyPair(privateKey: string): KeyPair {
-  return starkEc.keyFromPrivate(grindKey(privateKey), 'hex');
+  assert(!isHexPrefixed(privateKey), PRIVATE_KEY_IS_HEX_PREFIXED);
+  // assert(!isGrinded(privateKey), PRIVATE_KEY_NOT_GRINDED);
+  return starkEc.keyFromPrivate(privateKey, 'hex');
 }
 
 export function getStarkPublicKey(publicKey: string): string {

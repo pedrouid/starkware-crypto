@@ -137,6 +137,8 @@ interface StarkwareCrypto {
   serializeSignature(sig: Signature): string;
 
   deserializeSignature(sig: string): SignatureOptions;
+
+  grindKey(privateKey: string): string;
 }
 ```
 
