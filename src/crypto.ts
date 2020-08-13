@@ -418,10 +418,11 @@ export function serializeSignature(sig: Signature): string {
 }
 
 export function deserializeSignature(sig: string): SignatureOptions {
+  const size = 63;
   sig = encUtils.removeHexPrefix(sig);
   return {
-    r: new BN(sig.substring(0, 64), 'hex'),
-    s: new BN(sig.substring(64, 128), 'hex'),
-    recoveryParam: importRecoveryParam(sig.substring(128, 130)),
+    r: new BN(sig.substring(0, size), 'hex'),
+    s: new BN(sig.substring(size, size * 2), 'hex'),
+    recoveryParam: importRecoveryParam(sig.substring(size * 2, size * 2 + 2)),
   };
 }
