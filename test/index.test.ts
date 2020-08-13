@@ -1,5 +1,4 @@
 import * as starkwareCrypto from '../src';
-import { serialize } from 'v8';
 
 // ---------------------- TEST DATA POINTS ---------------------- //
 
