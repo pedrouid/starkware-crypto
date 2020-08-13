@@ -44,7 +44,7 @@
     "ethereumjs-wallet": "^1.0.0",
     "hash.js": "^1.1.7",
     "js-sha3": "^0.8.0",
-    "rsv-signature": "^1.0.0",
+    "rsv-signature": "^1.1.0",
     "starkware-types": "^1.1.0"
   },
   "devDependencies": {

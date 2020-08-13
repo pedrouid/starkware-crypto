@@ -6218,10 +6218,10 @@ rollup@^1.32.1:
     "@types/node" "*"
     acorn "^7.1.0"
 
-rsv-signature@^1.0.0:
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/rsv-signature/-/rsv-signature-1.0.0.tgz#10a567ef033b210a6b8d9143b31c057ca664aa7e"
-  integrity sha512-wLVMD2kFxgzMXAXl7xSHQucK0PPB5mCZDV+g4hhtfOgc5Q56ClMXrQ+oQPyLPtfPqb4bjPGtEv9oFwdC7yc97w==
+rsv-signature@^1.1.0:
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/rsv-signature/-/rsv-signature-1.1.0.tgz#d90b2293433fbd27f5b5fbee379afcb770346d83"
+  integrity sha512-8eoYjJMeWeLSejckVCYQ3teOdpaiBp7w64xDYX1qBgVLojjHXKD8dOq5eUDelAtyuYRDS1T+HVuGEegvzgNdwA==
   dependencies:
     bn.js "^4.8.0"
     enc-utils "^2.2.1"
