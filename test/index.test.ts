@@ -1,4 +1,5 @@
 import * as starkwareCrypto from '../src';
+import { SignatureInput } from '../src';
 
 // ---------------------- TEST DATA POINTS ---------------------- //
 
@@ -19,9 +20,9 @@ const PUBLIC_KEY_COMPRESSED =
 const STARK_PUBLIC_KEY =
   '0x042582cfcb098a503562acd1325922799c9cebdf9249c26a41bd04007997f2eb';
 const STARK_SIGNATURE =
-  '0x7130036cfee14ee468f84538da0b2c71f11908f3dcc4c0b7fb28c2e0c8504d1e4e3191d2adb180a2ec31eff2366381e2ec807426f232a6cae2387d6d7886e1c';
+  '0x7130036cfee14ee468f84538da0b2c71f11908f3dcc4c0b7fb28c2e0c8504d01e4e3191d2adb180a2ec31eff2366381e2ec807426f232a6cae2387d6d7886e1c';
 const STARK_SIGNATURE_2 =
-  '0x1df4e7bbad23da5e5266c2d724b5c892c9cc25cdb8a5c3371bac53013f3d527715136cb5e9bf1f2733885d98cebded918e80f130ec85506e2779d364dd83a81c';
+  '0x01df4e7bbad23da5e5266c2d724b5c892c9cc25cdb8a5c3371bac53013f3d5270715136cb5e9bf1f2733885d98cebded918e80f130ec85506e2779d364dd83a81c';
 
 describe('starkware-crypto', () => {
   let path: string;
@@ -142,7 +143,11 @@ describe('starkware-crypto', () => {
       STARK_SIGNATURE_2
     );
 
-    const verified = starkwareCrypto.verify(keyPair, message, deserialized);
+    const verified = starkwareCrypto.verify(
+      keyPair,
+      message,
+      deserialized as SignatureInput
+    );
 
     expect(verified).toBeTruthy();
   });

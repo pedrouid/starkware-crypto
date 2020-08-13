@@ -1,6 +1,7 @@
 import BN from 'bn.js';
 import hashJS from 'hash.js';
 import assert from 'assert';
+import * as RSV from 'rsv-signature';
 import * as bip39 from 'bip39';
 import * as elliptic from 'elliptic';
 import * as encUtils from 'enc-utils';
@@ -15,7 +16,6 @@ import {
   MessageParams,
   Signature,
   SignatureInput,
-  SignatureOptions,
 } from './types';
 import { constantPointsHex } from './constants';
 
@@ -401,28 +401,10 @@ export function verify(
   return keyPair.verify(fixMessage(msg), sig);
 }
 
-export function exportRecoveryParam(recoveryParam: number | null): string {
-  return new BN(recoveryParam || 0).add(new BN(27)).toString(16);
-}
+export const exportRecoveryParam = RSV.exportRecoveryParam;
 
-export function importRecoveryParam(v: string): number {
-  return new BN(v, 16).sub(new BN(27)).toNumber();
-}
+export const importRecoveryParam = RSV.importRecoveryParam;
 
-export function serializeSignature(sig: Signature): string {
-  return encUtils.addHexPrefix(
-    sig.r.toString(16) +
-      sig.s.toString(16) +
-      exportRecoveryParam(sig.recoveryParam)
-  );
-}
+export const serializeSignature = RSV.serializeSignature;
 
-export function deserializeSignature(sig: string): SignatureOptions {
-  const size = 63;
-  sig = encUtils.removeHexPrefix(sig);
-  return {
-    r: new BN(sig.substring(0, size), 'hex'),
-    s: new BN(sig.substring(size, size * 2), 'hex'),
-    recoveryParam: importRecoveryParam(sig.substring(size * 2, size * 2 + 2)),
-  };
-}
+export const deserializeSignature = RSV.deserializeSignature;

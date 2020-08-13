@@ -37,14 +37,15 @@
     "prepare": "yarn lint && yarn build && yarn test"
   },
   "dependencies": {
-    "bip39": "3.0.2",
-    "bn.js": "5.1.2",
-    "elliptic": "6.5.3",
-    "enc-utils": "2.2.2",
-    "ethereumjs-wallet": "1.0.0",
-    "hash.js": "1.1.7",
-    "js-sha3": "0.8.0",
-    "starkware-types": "1.1.0"
+    "bip39": "^3.0.2",
+    "bn.js": "^5.1.2",
+    "elliptic": "^6.5.3",
+    "enc-utils": "^2.2.2",
+    "ethereumjs-wallet": "^1.0.0",
+    "hash.js": "^1.1.7",
+    "js-sha3": "^0.8.0",
+    "rsv-signature": "^1.0.0",
+    "starkware-types": "^1.1.0"
   },
   "devDependencies": {
     "@types/elliptic": "6.4.12",
