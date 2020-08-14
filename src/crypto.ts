@@ -401,6 +401,32 @@ export function verify(
   return keyPair.verify(fixMessage(msg), sig);
 }
 
+export function recoverStarkPublicKey(
+  msg: string,
+  sig: SignatureInput,
+  j = 0
+): string {
+  const signature = new elliptic.ec.Signature(sig);
+  const publicKey = starkEc.recoverPubKey(
+    fixMessage(msg),
+    signature,
+    signature.recoveryParam || j
+  );
+  return getStarkPublicKey(publicKey);
+}
+
+export function verifyStarkPublicKey(
+  starkPublicKey: string,
+  msg: string,
+  sig: SignatureInput
+): boolean {
+  const recovered = recoverStarkPublicKey(msg, sig);
+  return (
+    encUtils.removeHexPrefix(recovered).toLowerCase() ===
+    encUtils.removeHexPrefix(starkPublicKey).toLowerCase()
+  );
+}
+
 export const exportRecoveryParam = RSV.exportRecoveryParam;
 
 export const importRecoveryParam = RSV.importRecoveryParam;
