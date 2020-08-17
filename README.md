@@ -81,6 +81,10 @@ interface StarkwareCrypto {
 
   getStarkPublicKey(keyPair: KeyPair): string;
 
+  getXCoordinate(publicKey: string): string;
+
+  getYCoordinate(publicKey: string): string;
+
   hashTokenId(token: Token);
 
   hashMessage(w1: string, w2: string, w3: string);

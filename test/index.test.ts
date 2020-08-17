@@ -12,10 +12,12 @@ const index = '0';
 // ---------------------- EXPECTED DATA POINTS ---------------------- //
 
 const STARK_DERIVATION_PATH = `m/2645'/579218131'/1393043894'/0'/0'/0`;
-const PUBLIC_KEY =
-  '04042582cfcb098a503562acd1325922799c9cebdf9249c26a41bd04007997f2eb03b73cdb07f399130ea38ee860c3b708c92165df37b1690d7e0af1678ecdaff8';
-const PUBLIC_KEY_COMPRESSED =
-  '02042582cfcb098a503562acd1325922799c9cebdf9249c26a41bd04007997f2eb';
+const X_COORDINATE =
+  '042582cfcb098a503562acd1325922799c9cebdf9249c26a41bd04007997f2eb';
+const Y_COORDINATE =
+  '03b73cdb07f399130ea38ee860c3b708c92165df37b1690d7e0af1678ecdaff8';
+const PUBLIC_KEY = '04' + X_COORDINATE + Y_COORDINATE;
+const PUBLIC_KEY_COMPRESSED = '02' + X_COORDINATE;
 const STARK_PUBLIC_KEY = PUBLIC_KEY_COMPRESSED;
 const STARK_SIGNATURE_ETH =
   '0x01df4e7bbad23da5e5266c2d724b5c892c9cc25cdb8a5c3371bac53013f3d5270715136cb5e9bf1f2733885d98cebded918e80f130ec85506e2779d364dd83a81c';
@@ -52,6 +54,15 @@ describe('starkware-crypto', () => {
   it('match starkPublicKey to public key compressed', () => {
     const starkPublicKey = starkwareCrypto.getStarkPublicKey(keyPair);
     expect(starkPublicKey).toEqual(STARK_PUBLIC_KEY);
+  });
+
+  it('match x coordinate', () => {
+    const x = starkwareCrypto.getXCoordinate(STARK_PUBLIC_KEY);
+    expect(x).toEqual(X_COORDINATE);
+  });
+  it('match y coordinate', () => {
+    const y = starkwareCrypto.getYCoordinate(STARK_PUBLIC_KEY);
+    expect(y).toEqual(Y_COORDINATE);
   });
 
   it('compress', () => {

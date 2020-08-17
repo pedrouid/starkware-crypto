@@ -106,9 +106,7 @@ function checkHexValue(hex: string) {
 function parseTokenInput(input: Token | string) {
   if (typeof input === 'string') {
     if (isCompressedPublicKey(input)) {
-      const keyPair = getKeyPairFromPublicKey(input);
-      const starkPublicKeyBn = (keyPair as any).pub.getX();
-      return starkPublicKeyBn.toString(16);
+      return getXCoordinate(input);
     }
     checkHexValue(input);
     return input;
@@ -226,6 +224,16 @@ export function getPublic(keyPair: KeyPair, compressed = false): string {
 
 export function getStarkPublicKey(keyPair: KeyPair): string {
   return getPublic(keyPair, true);
+}
+
+export function getXCoordinate(publicKey: string): string {
+  const keyPair = getKeyPairFromPublicKey(publicKey);
+  return encUtils.sanitizeBytes((keyPair as any).pub.getX().toString(16), 2);
+}
+
+export function getYCoordinate(publicKey: string): string {
+  const keyPair = getKeyPairFromPublicKey(publicKey);
+  return encUtils.sanitizeBytes((keyPair as any).pub.getY().toString(16), 2);
 }
 
 export function hashTokenId(token: Token) {
