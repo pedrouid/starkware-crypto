@@ -1,7 +1,7 @@
 {
   "name": "starkware-crypto",
   "description": "Starkware Crypto Library",
-  "version": "1.9.5",
+  "version": "1.9.6",
   "author": "Pedro Gomes <github.com/pedrouid>",
   "license": "Apache-2.0",
   "keywords": [
