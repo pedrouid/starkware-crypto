@@ -73,11 +73,13 @@ interface StarkwareCrypto {
 
   getKeyPair(privateKey: string): KeyPair;
 
-  getStarkPublicKey(publicKey: string): string;
+  getKeyPairFromPublicKey(publicKey: string): KeyPair;
 
   getPrivate(keyPair: KeyPair): string;
 
-  getPublic(keyPair: KeyPair, compressed?: boolean): string;
+  getPublic(keyPair: KeyPair, compressed: bolean): string;
+
+  getStarkPublicKey(keyPair: KeyPair): string;
 
   hashTokenId(token: Token);
 
@@ -129,6 +131,16 @@ interface StarkwareCrypto {
   sign(keyPair: KeyPair, msg: string): Signature;
 
   verify(keyPair: KeyPair, msg: string, sig: SignatureInput): boolean;
+
+  verifyStarkPublicKey(
+    starkPublicKey: string,
+    msg: string,
+    sig: SignatureInput
+  ): boolean;
+
+  compress(publicKey: string): string;
+
+  decompress(publicKey: string): string;
 
   exportRecoveryParam(recoveryParam: number | null): string;
 

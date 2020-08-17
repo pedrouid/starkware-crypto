@@ -195,11 +195,15 @@ export function getKeyPairFromPath(mnemonic: string, path: string): KeyPair {
     .derivePath(path)
     .getWallet()
     .getPrivateKeyString();
-  return getKeyPair(privateKey);
+  return getKeyPair(grindKey(privateKey));
 }
 
 export function getKeyPair(privateKey: string): KeyPair {
-  return starkEc.keyFromPrivate(grindKey(privateKey), 'hex');
+  return starkEc.keyFromPrivate(privateKey, 'hex');
+}
+
+export function getKeyPairFromPublicKey(publicKey: string): KeyPair {
+  return starkEc.keyFromPublic(encUtils.hexToArray(publicKey));
 }
 
 export function getPrivate(keyPair: KeyPair): string {
@@ -208,6 +212,10 @@ export function getPrivate(keyPair: KeyPair): string {
 
 export function getPublic(keyPair: KeyPair, compressed = false): string {
   return keyPair.getPublic(compressed, 'hex');
+}
+
+export function getStarkPublicKey(keyPair: KeyPair): string {
+  return encUtils.sanitizeHex(getPublic(keyPair, true));
 }
 
 export function hashTokenId(token: Token) {
@@ -396,41 +404,20 @@ export function verify(
 }
 
 export function compress(publicKey: string): string {
-  return starkEc
-    .keyFromPublic(encUtils.hexToArray(publicKey))
-    .getPublic(true, 'hex');
+  return getKeyPairFromPublicKey(publicKey).getPublic(true, 'hex');
 }
 
 export function decompress(publicKey: string): string {
-  return starkEc
-    .keyFromPublic(encUtils.hexToArray(publicKey))
-    .getPublic(false, 'hex');
+  return getKeyPairFromPublicKey(publicKey).getPublic(false, 'hex');
 }
 
-export function recoverPublicKey(
-  msg: string,
-  sig: SignatureInput,
-  j = 0
-): string {
-  const signature = new elliptic.ec.Signature(sig);
-  const publicKey = starkEc.recoverPubKey(
-    fixMessage(msg),
-    signature,
-    signature.recoveryParam || j
-  );
-  return publicKey;
-}
-
-export function verifyPublicKey(
-  publicKey: string,
+export function verifyStarkPublicKey(
+  starkPublicKey: string,
   msg: string,
   sig: SignatureInput
 ): boolean {
-  const recovered = recoverPublicKey(msg, sig);
-  return (
-    encUtils.removeHexPrefix(recovered).toLowerCase() ===
-    encUtils.removeHexPrefix(publicKey).toLowerCase()
-  );
+  const keyPair = getKeyPairFromPublicKey(starkPublicKey);
+  return verify(keyPair, msg, sig);
 }
 
 export const exportRecoveryParam = RSV.exportRecoveryParam;

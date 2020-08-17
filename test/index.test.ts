@@ -16,10 +16,11 @@ const PUBLIC_KEY =
   '04042582cfcb098a503562acd1325922799c9cebdf9249c26a41bd04007997f2eb03b73cdb07f399130ea38ee860c3b708c92165df37b1690d7e0af1678ecdaff8';
 const PUBLIC_KEY_COMPRESSED =
   '02042582cfcb098a503562acd1325922799c9cebdf9249c26a41bd04007997f2eb';
-const STARK_SIGNATURE_ERC20 =
-  '0x001cea14438f3715ba87d06978e6633f1e6a13e6b62f3b2be05af8c268c76e1a03f12e766d9ff9bd622b36c50f4c6b64b494cfc6e7117c29bce06787b2cf3e551b';
+const STARK_PUBLIC_KEY = '0x' + PUBLIC_KEY_COMPRESSED;
 const STARK_SIGNATURE_ETH =
   '0x01df4e7bbad23da5e5266c2d724b5c892c9cc25cdb8a5c3371bac53013f3d5270715136cb5e9bf1f2733885d98cebded918e80f130ec85506e2779d364dd83a81c';
+const STARK_SIGNATURE_ERC20 =
+  '0x00557b2fcb1a60536a4d2655b2c597d03607c44c7d7cb5afc3bc26a7750af57b006880b2e5857a31df9387071534e1459017c7da0608597fca6f64f0b82d9c401b';
 
 describe('starkware-crypto', () => {
   let path: string;
@@ -46,6 +47,11 @@ describe('starkware-crypto', () => {
   it('match expected public key compressed', () => {
     const compressed = starkwareCrypto.getPublic(keyPair, true);
     expect(compressed).toEqual(PUBLIC_KEY_COMPRESSED);
+  });
+
+  it('match starkPublicKey to public key compressed', () => {
+    const starkPublicKey = starkwareCrypto.getStarkPublicKey(keyPair);
+    expect(starkPublicKey).toEqual(STARK_PUBLIC_KEY);
   });
 
   it('compress', () => {
@@ -87,14 +93,18 @@ describe('starkware-crypto', () => {
     );
 
     const signature = starkwareCrypto.sign(keyPair, message);
-
-    expect(starkwareCrypto.serializeSignature(signature)).toEqual(
-      STARK_SIGNATURE_ETH
-    );
+    const serialized = starkwareCrypto.serializeSignature(signature);
+    expect(serialized).toEqual(STARK_SIGNATURE_ETH);
 
     const verified = starkwareCrypto.verify(keyPair, message, signature);
 
     expect(verified).toBeTruthy();
+
+    const starkPublicKey = starkwareCrypto.getStarkPublicKey(keyPair);
+
+    expect(
+      starkwareCrypto.verifyStarkPublicKey(starkPublicKey, message, signature)
+    ).toBeTruthy();
   });
 
   it('sign erc20 transfer message', () => {
@@ -102,12 +112,12 @@ describe('starkware-crypto', () => {
       from: {
         vaultId: '34',
         starkPublicKey:
-          '0x5fa3383597691ea9d827a79e1a4f0f7949435ced18ca9619de8ab97e661020',
+          '0x03a535c13f12c6a2c7e7c0dade3a68225988698687e396a321c12f5d393bea4a',
       },
       to: {
         vaultId: '21',
         starkPublicKey:
-          '0x5fa3383597691ea9d827a79e1a4f0f7949435ced18ca9619de8ab97e661020',
+          '0x03a535c13f12c6a2c7e7c0dade3a68225988698687e396a321c12f5d393bea4a',
       },
       token: {
         type: 'ERC20' as 'ERC20',
@@ -132,13 +142,17 @@ describe('starkware-crypto', () => {
     );
 
     const signature = starkwareCrypto.sign(keyPair, message);
-
-    expect(starkwareCrypto.serializeSignature(signature)).toEqual(
-      STARK_SIGNATURE_ERC20
-    );
+    const serialized = starkwareCrypto.serializeSignature(signature);
+    expect(serialized).toEqual(STARK_SIGNATURE_ERC20);
 
     const verified = starkwareCrypto.verify(keyPair, message, signature);
 
     expect(verified).toBeTruthy();
+
+    const starkPublicKey = starkwareCrypto.getStarkPublicKey(keyPair);
+
+    expect(
+      starkwareCrypto.verifyStarkPublicKey(starkPublicKey, message, signature)
+    ).toBeTruthy();
   });
 });
