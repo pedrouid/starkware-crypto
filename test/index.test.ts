@@ -16,9 +16,9 @@ const PUBLIC_KEY =
   '04042582cfcb098a503562acd1325922799c9cebdf9249c26a41bd04007997f2eb03b73cdb07f399130ea38ee860c3b708c92165df37b1690d7e0af1678ecdaff8';
 const PUBLIC_KEY_COMPRESSED =
   '02042582cfcb098a503562acd1325922799c9cebdf9249c26a41bd04007997f2eb';
-const STARK_SIGNATURE =
+const STARK_SIGNATURE_ERC20 =
   '0x001cea14438f3715ba87d06978e6633f1e6a13e6b62f3b2be05af8c268c76e1a03f12e766d9ff9bd622b36c50f4c6b64b494cfc6e7117c29bce06787b2cf3e551b';
-const STARK_SIGNATURE_2 =
+const STARK_SIGNATURE_ETH =
   '0x01df4e7bbad23da5e5266c2d724b5c892c9cc25cdb8a5c3371bac53013f3d5270715136cb5e9bf1f2733885d98cebded918e80f130ec85506e2779d364dd83a81c';
 
 describe('starkware-crypto', () => {
@@ -89,7 +89,7 @@ describe('starkware-crypto', () => {
     const signature = starkwareCrypto.sign(keyPair, message);
 
     expect(starkwareCrypto.serializeSignature(signature)).toEqual(
-      STARK_SIGNATURE_2
+      STARK_SIGNATURE_ETH
     );
 
     const verified = starkwareCrypto.verify(keyPair, message, signature);
@@ -134,7 +134,7 @@ describe('starkware-crypto', () => {
     const signature = starkwareCrypto.sign(keyPair, message);
 
     expect(starkwareCrypto.serializeSignature(signature)).toEqual(
-      STARK_SIGNATURE
+      STARK_SIGNATURE_ERC20
     );
 
     const verified = starkwareCrypto.verify(keyPair, message, signature);
