@@ -202,12 +202,6 @@ export function getKeyPair(privateKey: string): KeyPair {
   return starkEc.keyFromPrivate(grindKey(privateKey), 'hex');
 }
 
-export function getStarkPublicKey(publicKey: string): string {
-  const keyPair = starkEc.keyFromPublic(publicKey, 'hex');
-  const starkPublicKeyBn = (keyPair as any).pub.getX();
-  return encUtils.sanitizeHex(starkPublicKeyBn.toString(16));
-}
-
 export function getPrivate(keyPair: KeyPair): string {
   return keyPair.getPrivate('hex');
 }
@@ -401,7 +395,19 @@ export function verify(
   return keyPair.verify(fixMessage(msg), sig);
 }
 
-export function recoverStarkPublicKey(
+export function compress(publicKey: string): string {
+  return starkEc
+    .keyFromPublic(encUtils.hexToArray(publicKey))
+    .getPublic(true, 'hex');
+}
+
+export function decompress(publicKey: string): string {
+  return starkEc
+    .keyFromPublic(encUtils.hexToArray(publicKey))
+    .getPublic(false, 'hex');
+}
+
+export function recoverPublicKey(
   msg: string,
   sig: SignatureInput,
   j = 0
@@ -412,18 +418,18 @@ export function recoverStarkPublicKey(
     signature,
     signature.recoveryParam || j
   );
-  return getStarkPublicKey(publicKey);
+  return publicKey;
 }
 
-export function verifyStarkPublicKey(
-  starkPublicKey: string,
+export function verifyPublicKey(
+  publicKey: string,
   msg: string,
   sig: SignatureInput
 ): boolean {
-  const recovered = recoverStarkPublicKey(msg, sig);
+  const recovered = recoverPublicKey(msg, sig);
   return (
     encUtils.removeHexPrefix(recovered).toLowerCase() ===
-    encUtils.removeHexPrefix(starkPublicKey).toLowerCase()
+    encUtils.removeHexPrefix(publicKey).toLowerCase()
   );
 }
 

@@ -1,5 +1,6 @@
+import { MethodParams } from 'starkware-types';
+
 import * as starkwareCrypto from '../src';
-import { SignatureInput } from '../src';
 
 // ---------------------- TEST DATA POINTS ---------------------- //
 
@@ -17,10 +18,8 @@ const PUBLIC_KEY =
   '04042582cfcb098a503562acd1325922799c9cebdf9249c26a41bd04007997f2eb03b73cdb07f399130ea38ee860c3b708c92165df37b1690d7e0af1678ecdaff8';
 const PUBLIC_KEY_COMPRESSED =
   '02042582cfcb098a503562acd1325922799c9cebdf9249c26a41bd04007997f2eb';
-const STARK_PUBLIC_KEY =
-  '0x042582cfcb098a503562acd1325922799c9cebdf9249c26a41bd04007997f2eb';
 const STARK_SIGNATURE =
-  '0x007130036cfee14ee468f84538da0b2c71f11908f3dcc4c0b7fb28c2e0c8504d01e4e3191d2adb180a2ec31eff2366381e2ec807426f232a6cae2387d6d7886e1c';
+  '0x001cea14438f3715ba87d06978e6633f1e6a13e6b62f3b2be05af8c268c76e1a03f12e766d9ff9bd622b36c50f4c6b64b494cfc6e7117c29bce06787b2cf3e551b';
 const STARK_SIGNATURE_2 =
   '0x01df4e7bbad23da5e5266c2d724b5c892c9cc25cdb8a5c3371bac53013f3d5270715136cb5e9bf1f2733885d98cebded918e80f130ec85506e2779d364dd83a81c';
 
@@ -37,52 +36,101 @@ describe('starkware-crypto', () => {
     keyPair = starkwareCrypto.getKeyPairFromPath(mnemonic, path);
   });
 
-  it('should match expected derivation path', () => {
+  it('match expected derivation path', () => {
     expect(path).toEqual(STARK_DERIVATION_PATH);
   });
 
-  it('should match expected public key', () => {
+  it('match expected public key', () => {
     const publicKey = starkwareCrypto.getPublic(keyPair);
     expect(publicKey).toEqual(PUBLIC_KEY);
   });
 
-  it('should match expected public key compressed', () => {
-    const publicKey = starkwareCrypto.getPublic(keyPair, true);
-    expect(publicKey).toEqual(PUBLIC_KEY_COMPRESSED);
+  it('match expected public key compressed', () => {
+    const compressed = starkwareCrypto.getPublic(keyPair, true);
+    expect(compressed).toEqual(PUBLIC_KEY_COMPRESSED);
   });
 
-  it('should generate starkPublicKey', () => {
-    const publicKey = starkwareCrypto.getPublic(keyPair);
-    const starkPublicKey = starkwareCrypto.getStarkPublicKey(publicKey);
-    expect(starkPublicKey).toEqual(STARK_PUBLIC_KEY);
+  it('compress', () => {
+    const compressed = starkwareCrypto.compress(PUBLIC_KEY);
+    expect(compressed).toEqual(PUBLIC_KEY_COMPRESSED);
   });
 
-  it('should generate and sign transfer message', () => {
-    const msgParams = {
-      amount: '2154549703648910716',
-      nonce: '1',
-      senderVaultId: '34',
+  it('decompress', () => {
+    const publicKey = starkwareCrypto.decompress(PUBLIC_KEY_COMPRESSED);
+    expect(publicKey).toEqual(PUBLIC_KEY);
+  });
+
+  it('sign eth transfer message', () => {
+    const params = {
+      from: {
+        starkPublicKey:
+          '0x03a535c13f12c6a2c7e7c0dade3a68225988698687e396a321c12f5d393bea4a',
+        vaultId: '1',
+      },
+      to: {
+        starkPublicKey:
+          '0x03a535c13f12c6a2c7e7c0dade3a68225988698687e396a321c12f5d393bea4a',
+        vaultId: '606138218',
+      },
+      token: { type: 'ETH' as 'ETH', data: { quantum: '10000000000' } },
+      quantizedAmount: '100000000',
+      nonce: '1597237097',
+      expirationTimestamp: '444396',
+    };
+
+    const message = starkwareCrypto.getTransferMsg(
+      params.quantizedAmount,
+      params.nonce,
+      params.from.vaultId,
+      params.token,
+      params.to.vaultId,
+      params.to.starkPublicKey,
+      params.expirationTimestamp
+    );
+
+    const signature = starkwareCrypto.sign(keyPair, message);
+
+    expect(starkwareCrypto.serializeSignature(signature)).toEqual(
+      STARK_SIGNATURE_2
+    );
+
+    const verified = starkwareCrypto.verify(keyPair, message, signature);
+
+    expect(verified).toBeTruthy();
+  });
+
+  it('sign erc20 transfer message', () => {
+    const params = {
+      from: {
+        vaultId: '34',
+        starkPublicKey:
+          '0x5fa3383597691ea9d827a79e1a4f0f7949435ced18ca9619de8ab97e661020',
+      },
+      to: {
+        vaultId: '21',
+        starkPublicKey:
+          '0x5fa3383597691ea9d827a79e1a4f0f7949435ced18ca9619de8ab97e661020',
+      },
       token: {
-        type: 'ETH' as starkwareCrypto.TokenTypes,
+        type: 'ERC20' as 'ERC20',
         data: {
           quantum: '1',
           tokenAddress: '0x89b94e8C299235c00F97E6B0D7368E82d640E848',
         },
       },
-      receiverVaultId: '21',
-      receiverPublicKey:
-        '0x5fa3383597691ea9d827a79e1a4f0f7949435ced18ca9619de8ab97e661020',
+      quantizedAmount: '2154549703648910716',
+      nonce: '1',
       expirationTimestamp: '438953',
     };
 
     const message = starkwareCrypto.getTransferMsg(
-      msgParams.amount,
-      msgParams.nonce,
-      msgParams.senderVaultId,
-      msgParams.token,
-      msgParams.receiverVaultId,
-      msgParams.receiverPublicKey,
-      msgParams.expirationTimestamp
+      params.quantizedAmount,
+      params.nonce,
+      params.from.vaultId,
+      params.token,
+      params.to.vaultId,
+      params.to.starkPublicKey,
+      params.expirationTimestamp
     );
 
     const signature = starkwareCrypto.sign(keyPair, message);
@@ -92,62 +140,6 @@ describe('starkware-crypto', () => {
     );
 
     const verified = starkwareCrypto.verify(keyPair, message, signature);
-
-    expect(verified).toBeTruthy();
-  });
-  it('should generate and sign transfer message', () => {
-    const from = {
-      starkPublicKey:
-        '0x03a535c13f12c6a2c7e7c0dade3a68225988698687e396a321c12f5d393bea4a',
-      vaultId: '1',
-    };
-    const to = {
-      starkPublicKey:
-        '0x03a535c13f12c6a2c7e7c0dade3a68225988698687e396a321c12f5d393bea4a',
-      vaultId: '606138218',
-    };
-    const token = { type: 'ETH' as 'ETH', data: { quantum: '10000000000' } };
-    const quantizedAmount = '100000000';
-    const nonce = '1597237097';
-    const expirationTimestamp = '444396';
-
-    const senderVaultId = from.vaultId;
-    const receiverVaultId = to.vaultId;
-    const receiverPublicKey = to.starkPublicKey;
-
-    const msgParams = {
-      amount: quantizedAmount,
-      nonce,
-      senderVaultId,
-      token,
-      receiverVaultId,
-      receiverPublicKey,
-      expirationTimestamp,
-    };
-
-    const message = starkwareCrypto.getTransferMsg(
-      msgParams.amount,
-      msgParams.nonce,
-      msgParams.senderVaultId,
-      msgParams.token,
-      msgParams.receiverVaultId,
-      msgParams.receiverPublicKey,
-      msgParams.expirationTimestamp
-    );
-
-    const signature = starkwareCrypto.sign(keyPair, message);
-    const serialized = starkwareCrypto.serializeSignature(signature);
-    const deserialized = starkwareCrypto.deserializeSignature(serialized);
-
-    expect(starkwareCrypto.serializeSignature(signature)).toEqual(
-      STARK_SIGNATURE_2
-    );
-
-    const verified = starkwareCrypto.verify(
-      keyPair,
-      message,
-      deserialized as SignatureInput
-    );
 
     expect(verified).toBeTruthy();
   });
