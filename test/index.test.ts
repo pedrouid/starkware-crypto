@@ -60,6 +60,7 @@ describe('starkware-crypto', () => {
     const x = starkwareCrypto.getXCoordinate(STARK_PUBLIC_KEY);
     expect(x).toEqual(X_COORDINATE);
   });
+
   it('match y coordinate', () => {
     const y = starkwareCrypto.getYCoordinate(STARK_PUBLIC_KEY);
     expect(y).toEqual(Y_COORDINATE);
