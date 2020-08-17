@@ -91,6 +91,11 @@ function pedersen(input) {
   return point.getX().toString(16);
 }
 
+function isCompressedPublicKey(hex: string) {
+  hex = encUtils.removeHexPrefix(hex);
+  return hex.length === 66 && (hex.startsWith('03') || hex.startsWith('02'));
+}
+
 function checkHexValue(hex: string) {
   assert(isHexPrefixed(hex), MISSING_HEX_PREFIX);
   const hexBn = new BN(encUtils.removeHexPrefix(hex), 16);
@@ -98,12 +103,17 @@ function checkHexValue(hex: string) {
   assert(hexBn.lt(prime));
 }
 
-function parseTokenInput(token: Token | string) {
-  if (typeof token === 'string') {
-    checkHexValue(token);
-    return token;
+function parseTokenInput(input: Token | string) {
+  if (typeof input === 'string') {
+    if (isCompressedPublicKey(input)) {
+      const keyPair = getKeyPairFromPublicKey(input);
+      const starkPublicKeyBn = (keyPair as any).pub.getX();
+      return starkPublicKeyBn.toString(16);
+    }
+    checkHexValue(input);
+    return input;
   }
-  return hashTokenId(token);
+  return hashTokenId(input);
 }
 
 /*
@@ -215,7 +225,7 @@ export function getPublic(keyPair: KeyPair, compressed = false): string {
 }
 
 export function getStarkPublicKey(keyPair: KeyPair): string {
-  return encUtils.sanitizeHex(getPublic(keyPair, true));
+  return getPublic(keyPair, true);
 }
 
 export function hashTokenId(token: Token) {
