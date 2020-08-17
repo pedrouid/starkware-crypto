@@ -1,5 +1,3 @@
-import { MethodParams } from 'starkware-types';
-
 import * as starkwareCrypto from '../src';
 
 // ---------------------- TEST DATA POINTS ---------------------- //
